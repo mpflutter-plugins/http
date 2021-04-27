@@ -5,6 +5,7 @@
 import 'dart:async';
 import 'dart:html';
 import 'dart:typed_data';
+import 'taro_client.dart';
 
 import 'package:pedantic/pedantic.dart' show unawaited;
 
@@ -14,10 +15,13 @@ import 'byte_stream.dart';
 import 'exception.dart';
 import 'streamed_response.dart';
 
+const bool isTaro =
+    bool.fromEnvironment('mpcore.env.taro', defaultValue: false);
+
 /// Create a [BrowserClient].
 ///
 /// Used from conditional imports, matches the definition in `client_stub.dart`.
-BaseClient createClient() => BrowserClient();
+BaseClient createClient() => isTaro ? TaroClient() : BrowserClient();
 
 /// A `dart:html`-based HTTP client that runs in the browser and is backed by
 /// XMLHttpRequests.
