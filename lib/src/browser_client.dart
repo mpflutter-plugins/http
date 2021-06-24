@@ -4,6 +4,7 @@
 
 import 'dart:async';
 import 'dart:html';
+import 'dart:js' as js;
 import 'dart:typed_data';
 import 'taro_client.dart';
 
@@ -15,8 +16,8 @@ import 'byte_stream.dart';
 import 'exception.dart';
 import 'streamed_response.dart';
 
-const bool isTaro =
-    bool.fromEnvironment('mpcore.env.taro', defaultValue: false);
+final bool isTaro = js.context['Taro'] != null &&
+    (js.context['Taro'] as js.JsObject)['request'] != null;
 
 /// Create a [BrowserClient].
 ///
