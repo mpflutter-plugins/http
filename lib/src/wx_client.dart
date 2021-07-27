@@ -13,13 +13,10 @@ import 'byte_stream.dart';
 import 'exception.dart';
 import 'streamed_response.dart';
 
-const bool isTaro =
-    bool.fromEnvironment('mpcore.env.taro', defaultValue: false);
-
 /// Create a [BrowserClient].
 ///
 /// Used from conditional imports, matches the definition in `client_stub.dart`.
-BaseClient createClient() => TaroClient();
+BaseClient createClient() => WXClient();
 
 /// A `dart:html`-based HTTP client that runs in the browser and is backed by
 /// XMLHttpRequests.
@@ -29,7 +26,7 @@ BaseClient createClient() => TaroClient();
 /// [BaseRequest.followRedirects], and [BaseRequest.maxRedirects] fields. It is
 /// also unable to stream requests or responses; a request will only be sent and
 /// a response will only be returned once all the data is available.
-class TaroClient extends BaseClient {
+class WXClient extends BaseClient {
   js.JsObject? requestTask;
 
   /// Whether to send credentials such as cookies or authorization headers for
@@ -45,7 +42,7 @@ class TaroClient extends BaseClient {
 
     var completer = Completer<StreamedResponse>();
 
-    requestTask = (js.context['Taro'] as js.JsObject).callMethod('request', [
+    requestTask = (js.context['wx'] as js.JsObject).callMethod('request', [
       js.JsObject.jsify({
         'url': request.url.toString(),
         'method': request.method,
@@ -53,7 +50,7 @@ class TaroClient extends BaseClient {
         'responseType': 'arraybuffer',
         'data': bytes,
         'success': (response) {
-          final body = base64.decode((js.context['Taro'] as js.JsObject)
+          final body = base64.decode((js.context['wx'] as js.JsObject)
               .callMethod('arrayBufferToBase64', [response['data']]) as String);
           final headers = <String, String>{};
           if (response['header'] is js.JsObject) {

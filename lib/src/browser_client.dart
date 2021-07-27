@@ -6,7 +6,7 @@ import 'dart:async';
 import 'dart:html';
 import 'dart:js' as js;
 import 'dart:typed_data';
-import 'taro_client.dart';
+import 'wx_client.dart';
 
 import 'package:pedantic/pedantic.dart' show unawaited;
 
@@ -16,13 +16,13 @@ import 'byte_stream.dart';
 import 'exception.dart';
 import 'streamed_response.dart';
 
-final bool isTaro = js.context['Taro'] != null &&
-    (js.context['Taro'] as js.JsObject)['request'] != null;
+final bool isWX = js.context['wx'] != null &&
+    (js.context['wx'] as js.JsObject)['request'] != null;
 
 /// Create a [BrowserClient].
 ///
 /// Used from conditional imports, matches the definition in `client_stub.dart`.
-BaseClient createClient() => isTaro ? TaroClient() : BrowserClient();
+BaseClient createClient() => isWX ? WXClient() : BrowserClient();
 
 /// A `dart:html`-based HTTP client that runs in the browser and is backed by
 /// XMLHttpRequests.
