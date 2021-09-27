@@ -6,7 +6,7 @@ import 'dart:async';
 import 'dart:html';
 import 'dart:js' as js;
 import 'dart:typed_data';
-import 'wx_client.dart';
+import 'miniprogram_client.dart';
 
 import 'package:pedantic/pedantic.dart' show unawaited;
 
@@ -16,13 +16,23 @@ import 'byte_stream.dart';
 import 'exception.dart';
 import 'streamed_response.dart';
 
-final bool isWX = js.context['wx'] != null &&
-    (js.context['wx'] as js.JsObject)['request'] != null;
+final bool isMiniProgram = (() {
+  if (js.context['wx'] != null &&
+      (js.context['wx'] as js.JsObject)['request'] != null) {
+    return true;
+  } else if (js.context['swan'] != null &&
+      (js.context['swan'] as js.JsObject)['request'] != null) {
+    return true;
+  } else {
+    return false;
+  }
+})();
 
 /// Create a [BrowserClient].
 ///
 /// Used from conditional imports, matches the definition in `client_stub.dart`.
-BaseClient createClient() => isWX ? WXClient() : BrowserClient();
+BaseClient createClient() =>
+    isMiniProgram ? MiniProgramClient() : BrowserClient();
 
 /// A `dart:html`-based HTTP client that runs in the browser and is backed by
 /// XMLHttpRequests.

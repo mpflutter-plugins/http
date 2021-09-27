@@ -16,7 +16,19 @@ import 'streamed_response.dart';
 /// Create a [BrowserClient].
 ///
 /// Used from conditional imports, matches the definition in `client_stub.dart`.
-BaseClient createClient() => WXClient();
+BaseClient createClient() => MiniProgramClient();
+
+final String _miniProgramScope = (() {
+  if (js.context['wx'] != null &&
+      (js.context['wx'] as js.JsObject)['request'] != null) {
+    return 'wx';
+  } else if (js.context['swan'] != null &&
+      (js.context['swan'] as js.JsObject)['request'] != null) {
+    return 'swan';
+  } else {
+    return '';
+  }
+})();
 
 /// A `dart:html`-based HTTP client that runs in the browser and is backed by
 /// XMLHttpRequests.
@@ -26,7 +38,7 @@ BaseClient createClient() => WXClient();
 /// [BaseRequest.followRedirects], and [BaseRequest.maxRedirects] fields. It is
 /// also unable to stream requests or responses; a request will only be sent and
 /// a response will only be returned once all the data is available.
-class WXClient extends BaseClient {
+class MiniProgramClient extends BaseClient {
   js.JsObject? requestTask;
 
   /// Whether to send credentials such as cookies or authorization headers for
@@ -42,7 +54,8 @@ class WXClient extends BaseClient {
 
     var completer = Completer<StreamedResponse>();
 
-    requestTask = (js.context['wx'] as js.JsObject).callMethod('request', [
+    requestTask =
+        (js.context[_miniProgramScope] as js.JsObject).callMethod('request', [
       js.JsObject.jsify({
         'url': request.url.toString(),
         'method': request.method,
@@ -50,26 +63,50 @@ class WXClient extends BaseClient {
         'responseType': 'arraybuffer',
         'data': bytes,
         'success': (response) {
-          final body = base64.decode((js.context['wx'] as js.JsObject)
-              .callMethod('arrayBufferToBase64', [response['data']]) as String);
-          final headers = <String, String>{};
-          if (response['header'] is js.JsObject) {
-            _JsMap(response['header'] as js.JsObject).forEach((key, value) {
-              if (value is String) {
-                headers[key] = value;
-              }
-            });
+          if (_miniProgramScope == 'wx') {
+            final body = base64.decode((js.context['wx'] as js.JsObject)
+                    .callMethod('arrayBufferToBase64', [response['data']])
+                as String);
+            final headers = <String, String>{};
+            if (response['header'] is js.JsObject) {
+              _JsMap(response['header'] as js.JsObject).forEach((key, value) {
+                if (value is String) {
+                  headers[key] = value;
+                }
+              });
+            }
+            completer.complete(
+              StreamedResponse(
+                ByteStream.fromBytes(body),
+                response['statusCode'] as int,
+                contentLength: body.length,
+                request: request,
+                headers: headers,
+                reasonPhrase: '',
+              ),
+            );
+          } else if (_miniProgramScope == 'swan') {
+            final body = base64.decode((js.context['Base64'] as js.JsObject)
+                .callMethod('encode', [response['data']]) as String);
+            final headers = <String, String>{};
+            if (response['header'] is js.JsObject) {
+              _JsMap(response['header'] as js.JsObject).forEach((key, value) {
+                if (value is String) {
+                  headers[key] = value;
+                }
+              });
+            }
+            completer.complete(
+              StreamedResponse(
+                ByteStream.fromBytes(body),
+                response['statusCode'] as int,
+                contentLength: body.length,
+                request: request,
+                headers: headers,
+                reasonPhrase: '',
+              ),
+            );
           }
-          completer.complete(
-            StreamedResponse(
-              ByteStream.fromBytes(body),
-              response['statusCode'] as int,
-              contentLength: body.length,
-              request: request,
-              headers: headers,
-              reasonPhrase: '',
-            ),
-          );
         },
         'fail': (error) {
           completer.completeError(
