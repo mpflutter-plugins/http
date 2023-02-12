@@ -22,9 +22,6 @@ final String _miniProgramScope = (() {
   if (js.context['wx'] != null &&
       (js.context['wx'] as js.JsObject)['request'] != null) {
     return 'wx';
-  } else if (js.context['swan'] != null &&
-      (js.context['swan'] as js.JsObject)['request'] != null) {
-    return 'swan';
   } else {
     return '';
   }
@@ -72,27 +69,7 @@ class MiniProgramClient extends BaseClient {
               _JsMap(response['header'] as js.JsObject).forEach((key, value) {
                 if (value is String) {
                   headers[key] = value;
-                }
-              });
-            }
-            completer.complete(
-              StreamedResponse(
-                ByteStream.fromBytes(body),
-                response['statusCode'] as int,
-                contentLength: body.length,
-                request: request,
-                headers: headers,
-                reasonPhrase: '',
-              ),
-            );
-          } else if (_miniProgramScope == 'swan') {
-            final body = base64.decode((js.context['Base64'] as js.JsObject)
-                .callMethod('encode', [response['data']]) as String);
-            final headers = <String, String>{};
-            if (response['header'] is js.JsObject) {
-              _JsMap(response['header'] as js.JsObject).forEach((key, value) {
-                if (value is String) {
-                  headers[key] = value;
+                  headers[key.toLowerCase()] = value;
                 }
               });
             }
